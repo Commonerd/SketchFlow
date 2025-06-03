@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sketchflow.netlify.app/sitemap.xml
+Sitemap: https://sketchflowapp.netlify.app/sitemap.xml
