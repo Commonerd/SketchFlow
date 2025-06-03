@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SketchFlow: Smart Online Whiteboard & Idea Visualization Tool</title>
+    <meta
+      name="description"
+      content="SketchFlow is a free online whiteboard and drawing tool with smart shape recognition. Visualize ideas, brainstorm, and create diagrams effortlessly."
+    />
+    <meta
+      name="keywords"
+      content="online whiteboard, free drawing tool, sketchpad, brainstorming tool, idea visualization, digital canvas, diagram maker, quick sketch online, smart shape recognition, automatic drawing correction"
+    />
+    <link rel="canonical" href="https://sketchflow.netlify.app/" />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='80' fill='%23663399'%3E🎨%3C/text%3E%3C/svg%3E"
+      type="image/svg+xml"
+    />
+
+    <style>
+      /* Basic Reset & Typography */
+      body {
+        font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f4f8; /* Light blue-gray background */
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      .header {
+        width: 100%;
+        background-color: #ffffff;
+        padding: 15px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      h1 {
+        color: #663399; /* Purple accent */
+        margin: 0;
+        font-size: 2.2em;
+        font-weight: 700;
+      }
+
+      h1 a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      p {
+        margin-bottom: 15px;
+        font-size: 1.1em;
+        color: #555;
+        max-width: 800px;
+        text-align: center;
+        padding: 0 20px;
+      }
+
+      .main-content {
+        display: flex;
+        width: 100%;
+        max-width: 1200px; /* Max width for content */
+        flex-grow: 1;
+        margin-top: 20px;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        justify-content: center;
+      }
+
+      .tools-panel {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin: 0 20px 20px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        flex-shrink: 0; /* Prevent shrinking */
+        min-width: 180px; /* Ensure tools panel has enough width */
+      }
+
+      .tools-panel h2 {
+        color: #663399;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.4em;
+      }
+
+      .tool-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .tool-group label {
+        font-weight: bold;
+        color: #444;
+        margin-bottom: 5px;
+        font-size: 0.95em;
+      }
+
+      .tool-group input[type="color"] {
+        width: 80%;
+        height: 35px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .tool-group input[type="range"] {
+        width: 100%;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 8px;
+        background: #ddd;
+        border-radius: 5px;
+        outline: none;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+      }
+
+      .tool-group input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #663399;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .tool-group input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #663399;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      button {
+        background-color: #8a2be2; /* BlueViolet */
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        width: 100%;
+        text-align: center;
+      }
+
+      button:hover {
+        background-color: #6a0dad; /* Darker BlueViolet */
+        transform: translateY(-2px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      #canvas-container {
+        flex-grow: 1; /* Allows canvas to take available space */
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin: 0 20px 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden; /* Hide overflow if canvas scales */
+        min-width: 300px; /* Minimum width for canvas */
+        aspect-ratio: 16 / 9; /* Maintain aspect ratio */
+      }
+
+      canvas {
+        background-color: #ffffff; /* White background for the canvas */
+        border-radius: 10px;
+        touch-action: none; /* Prevent browser default touch actions like scrolling */
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .ad-placeholder {
+        background-color: #e0e0e0;
+        border: 1px dashed #bbb;
+        padding: 20px;
+        margin-top: 40px;
+        text-align: center;
+        font-size: 1.2em;
+        color: #777;
+        height: 250px; /* Standard ad size */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 728px; /* For leaderboards */
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Responsive Adjustments */
+      @media (max-width: 768px) {
+        .header {
+          padding: 10px;
+        }
+
+        h1 {
+          font-size: 1.8em;
+        }
+
+        .main-content {
+          flex-direction: column;
+          align-items: center;
+          margin-top: 10px;
+        }
+
+        .tools-panel {
+          width: calc(100% - 40px); /* Full width with padding */
+          margin: 0 20px 20px 20px;
+          flex-direction: row; /* Layout tools horizontally on small screens */
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .tools-panel h2 {
+          width: 100%;
+          text-align: center;
+          margin-bottom: 10px;
+        }
+
+        .tool-group {
+          width: auto; /* Adjust width for horizontal layout */
+          flex-direction: row;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .tool-group label {
+          margin-bottom: 0;
+        }
+
+        button {
+          width: auto;
+          flex-grow: 1; /* Allow buttons to grow */
+        }
+
+        #canvas-container {
+          width: calc(100% - 40px);
+          margin: 0 20px 20px 20px;
+        }
+        .ad-placeholder {
+          max-width: 300px; /* For mobile ads */
+          height: 100px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1><a href="/">SketchFlow</a></h1>
+      <p>
+        Your smart online whiteboard for quick ideas, sketches, and diagrams.
+        Ideas flow effortlessly.
+      </p>
+    </div>
+
+    <div class="ad-placeholder">
+      [Your Google AdSense Code Here - Top Banner 728x90 or 320x50]
+    </div>
+
+    <div class="main-content">
+      <div class="tools-panel">
+        <h2>Drawing Tools</h2>
+        <div class="tool-group">
+          <label for="colorPicker">Color:</label>
+          <input type="color" id="colorPicker" value="#663399" />
+        </div>
+        <div class="tool-group">
+          <label for="brushSize">Brush Size:</label>
+          <input type="range" id="brushSize" min="1" max="50" value="5" />
+        </div>
+        <div class="tool-group">
+          <label for="toolSelect">Tool:</label>
+          <select id="toolSelect">
+            <option value="pen">Pen</option>
+            <option value="eraser">Eraser</option>
+          </select>
+        </div>
+        <button id="clearCanvas">Clear Canvas</button>
+        <button id="saveDrawing">Save as Image</button>
+        <button id="toggleSmartShape">Toggle Smart Shape (Beta)</button>
+        <p style="font-size: 0.9em; color: #777">
+          Draw basic shapes like circles, squares, lines, and we'll try to
+          correct them!
+        </p>
+      </div>
+
+      <div id="canvas-container">
+        <canvas id="drawingCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="ad-placeholder">
+      [Your Google AdSense Code Here - Bottom Banner 728x90 or 320x50]
+    </div>
+
+    <script>
+      const canvas = document.getElementById("drawingCanvas");
+      const ctx = canvas.getContext("2d");
+      const colorPicker = document.getElementById("colorPicker");
+      const brushSizeSlider = document.getElementById("brushSize");
+      const toolSelect = document.getElementById("toolSelect");
+      const clearCanvasButton = document.getElementById("clearCanvas");
+      const saveDrawingButton = document.getElementById("saveDrawing");
+      const toggleSmartShapeButton =
+        document.getElementById("toggleSmartShape");
+
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+      let currentColor = colorPicker.value;
+      let currentBrushSize = brushSizeSlider.value;
+      let currentTool = toolSelect.value;
+      let enableSmartShape = false; // Flag for smart shape recognition
+
+      // For local storage - storing drawing data
+      let drawingData = [];
+
+      // --- Canvas Setup ---
+      function resizeCanvas() {
+        // Get parent container's dimensions
+        const container = document.getElementById("canvas-container");
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        // Set canvas resolution for drawing
+        canvas.width = containerWidth;
+        canvas.height = containerHeight;
+
+        // Restore drawing if available
+        redrawCanvas();
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      document.addEventListener("DOMContentLoaded", () => {
+        resizeCanvas(); // Initial resize
+        loadDrawingFromLocalStorage(); // Load any saved drawing
+      });
+
+      // --- Drawing Logic ---
+      function startDrawing(e) {
+        isDrawing = true;
+        [lastX, lastY] = getCanvasCoordinates(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+
+        e.preventDefault(); // Prevent scrolling on touch devices
+
+        let currentX, currentY;
+        [currentX, currentY] = getCanvasCoordinates(e);
+
+        ctx.lineWidth = currentBrushSize;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        if (currentTool === "pen") {
+          ctx.strokeStyle = currentColor;
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          // Store path segment for local storage
+          drawingData.push({
+            type: "path",
+            x1: lastX,
+            y1: lastY,
+            x2: currentX,
+            y2: currentY,
+            color: currentColor,
+            size: currentBrushSize,
+            tool: "pen",
+          });
+        } else if (currentTool === "eraser") {
+          ctx.strokeStyle = "#ffffff"; // White color for eraser
+          ctx.lineTo(currentX, currentY);
+          ctx.stroke();
+          // Store path segment for local storage (eraser as a special pen type)
+          drawingData.push({
+            type: "path",
+            x1: lastX,
+            y1: lastY,
+            x2: currentX,
+            y2: currentY,
+            color: "#ffffff", // Eraser color
+            size: currentBrushSize,
+            tool: "eraser",
+          });
+        }
+        [lastX, lastY] = [currentX, currentY];
+      }
+
+      function stopDrawing(e) {
+        if (!isDrawing) return;
+        isDrawing = false;
+        ctx.closePath();
+
+        if (enableSmartShape && currentTool === "pen") {
+          // Simplified smart shape detection for demonstration
+          // In a real app, you'd analyze the 'drawingData' for the last path segment
+          // and replace it with a corrected shape.
+          // For this single-file demo, we'll just show the concept by drawing a corrected shape.
+          const pathSegments = drawingData.filter((d) => d.tool === "pen"); // Only consider pen strokes
+          if (pathSegments.length > 0) {
+            const lastPath = pathSegments[pathSegments.length - 1]; // Get the last segment
+            // Simple heuristic: if the path is very short and starts/ends near each other -> potential dot/small circle
+            const dx = lastPath.x2 - lastPath.x1;
+            const dy = lastPath.y2 - lastPath.y1;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (
+              distance < 20 &&
+              Math.abs(lastPath.x1 - lastPath.x2) < 5 &&
+              Math.abs(lastPath.y1 - lastPath.y2) < 5
+            ) {
+              // Potentially a dot, could be a small circle
+              drawingData.pop(); // Remove the original path data
+              drawingData.push({
+                type: "circle",
+                x: lastPath.x1,
+                y: lastPath.y1,
+                radius: currentBrushSize * 2, // A small circle
+                color: currentColor,
+                size: currentBrushSize,
+              });
+              redrawCanvas();
+            }
+            // More complex logic for detecting rectangles, lines, etc. would go here
+            // e.g., analyze points for linearity, number of corners, aspect ratio
+            // This is where a dedicated shape recognition library would be used.
+          }
+        }
+      }
+
+      // Helper to get coordinates across mouse and touch events
+      function getCanvasCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+
+        if (e.touches && e.touches.length > 0) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        return [clientX - rect.left, clientY - rect.top];
+      }
+
+      // --- Event Listeners ---
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", draw);
+      canvas.addEventListener("mouseup", stopDrawing);
+      canvas.addEventListener("mouseout", stopDrawing); // Stop drawing if mouse leaves canvas
+
+      // Touch events for mobile
+      canvas.addEventListener("touchstart", startDrawing, { passive: false });
+      canvas.addEventListener("touchmove", draw, { passive: false });
+      canvas.addEventListener("touchend", stopDrawing);
+      canvas.addEventListener("touchcancel", stopDrawing);
+
+      colorPicker.addEventListener(
+        "input",
+        (e) => (currentColor = e.target.value)
+      );
+      brushSizeSlider.addEventListener(
+        "input",
+        (e) => (currentBrushSize = e.target.value)
+      );
+      toolSelect.addEventListener(
+        "change",
+        (e) => (currentTool = e.target.value)
+      );
+
+      clearCanvasButton.addEventListener("click", () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawingData = []; // Clear stored data
+        saveDrawingToLocalStorage(); // Update local storage
+      });
+
+      saveDrawingButton.addEventListener("click", () => {
+        const dataURL = canvas.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = dataURL;
+        a.download = "sketchflow_drawing.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+
+      toggleSmartShapeButton.addEventListener("click", () => {
+        enableSmartShape = !enableSmartShape;
+        toggleSmartShapeButton.textContent = enableSmartShape
+          ? "Smart Shape: ON (Beta)"
+          : "Smart Shape: OFF";
+        toggleSmartShapeButton.style.backgroundColor = enableSmartShape
+          ? "#28a745"
+          : "#8a2be2";
+      });
+
+      // --- Local Storage for Persistent Drawing ---
+      function saveDrawingToLocalStorage() {
+        try {
+          localStorage.setItem(
+            "sketchflowDrawing",
+            JSON.stringify(drawingData)
+          );
+        } catch (e) {
+          console.error("Error saving drawing to local storage:", e);
+          // Optionally inform the user if storage is full
+        }
+      }
+
+      function loadDrawingFromLocalStorage() {
+        try {
+          const savedData = localStorage.getItem("sketchflowDrawing");
+          if (savedData) {
+            drawingData = JSON.parse(savedData);
+            redrawCanvas();
+          }
+        } catch (e) {
+          console.error("Error loading drawing from local storage:", e);
+          drawingData = []; // Reset if corrupted
+        }
+      }
+
+      function redrawCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear before redrawing
+        drawingData.forEach((item) => {
+          ctx.beginPath();
+          ctx.lineWidth = item.size;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.strokeStyle = item.color;
+
+          if (item.type === "path") {
+            ctx.moveTo(item.x1, item.y1);
+            ctx.lineTo(item.x2, item.y2);
+          } else if (item.type === "circle") {
+            ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+          }
+          // Add more shape types here as features are added
+          ctx.stroke();
+        });
+      }
+
+      // Periodically save drawing data (e.g., every 5 seconds of inactivity)
+      let saveTimer;
+      canvas.addEventListener("mouseup", () => {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveDrawingToLocalStorage, 5000); // Save 5 seconds after last interaction
+      });
+      canvas.addEventListener("touchend", () => {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveDrawingToLocalStorage, 5000);
+      });
+      window.addEventListener("beforeunload", saveDrawingToLocalStorage); // Save on page close
+    </script>
+  </body>
+</html>
